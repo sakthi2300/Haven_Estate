@@ -41,6 +41,20 @@ docker compose down -v   # stop the app and delete saved data
 | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins for cross-origin API requests |
 | `CROSS_SITE_COOKIES` | Set to `true` only when frontend and API are on different sites |
 
+## Admin login
+
+Open `/admin/login` and sign in with the values configured for `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+
+For local development, put your own values in `.env`:
+
+```env
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-your-own-password
+SESSION_SECRET=replace-with-a-long-random-secret
+```
+
+For Netlify, set these variables in **Project configuration → Environment variables**. Do not commit real credentials or secrets to this README or to Git; `.env` is excluded by `.gitignore`.
+
 ## Deploy to Netlify
 
 1. Push the project to GitHub and import the repository in Netlify.
