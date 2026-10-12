@@ -1,6 +1,6 @@
 # Haven Estate
 
-Real estate website built with React, Vite, and a Node.js API. Listings and enquiries are stored in a local JSON file.
+Real estate website built with React, Vite, and a Node.js API. Local development stores listings and enquiries in a JSON file; Netlify deployments store them in Netlify Blobs.
 
 ## Run locally
 
@@ -37,15 +37,24 @@ docker compose down -v   # stop the app and delete saved data
 | `ADMIN_EMAIL` | Admin login email |
 | `ADMIN_PASSWORD` | Admin password |
 | `SESSION_SECRET` | Signs the HttpOnly session cookie |
-| `VITE_API_URL` | Optional API origin for a separately hosted frontend; leave empty for local and Docker use |
+| `VITE_API_URL` | Optional API origin for a separately hosted frontend; leave empty for Netlify, local, and Docker use |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins for cross-origin API requests |
 | `CROSS_SITE_COOKIES` | Set to `true` only when frontend and API are on different sites |
 
-## Deployment
+## Deploy to Netlify
 
-Run the Docker container on a machine that stays available. The JSON file store needs persistent disk storage; serverless platforms such as Vercel do not provide durable local file storage.
+1. Push the project to GitHub and import the repository in Netlify.
+2. Set the build command to `npm run build`, the publish directory to `dist`, and the functions directory to `netlify/functions`. The included `netlify.toml` already sets these values.
+3. Add `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and a long random `SESSION_SECRET` under **Project configuration → Environment variables**. Apply them to the deploy contexts where you want admin login enabled.
+4. Deploy the site. The first API request initializes the Netlify Blobs store with sample listings. Netlify Blobs is available automatically to Functions; property and enquiry changes persist across deploys.
 
-Admin: `/admin/login`, then `/admin`. Sessions use an HttpOnly cookie and are checked on protected API calls.
+API routes are handled by Netlify Functions at `/api/*`. The JSON file store is still used when running `npm run dev` locally. Netlify Blobs uses strong consistency for this app's reads and supports conditional writes to avoid overwriting a newer edit. For concurrent changes to one data object, the repository retries the update.
+
+## Run on your own server
+
+Run the Docker container on a machine that stays available. Docker stores the JSON file in a named volume, so it survives restarts and rebuilds.
+
+Admin: `/admin/login`, then `/admin`. Sessions use an HttpOnly cookie and are checked on protected API calls. Set a unique, strong admin password and session secret before deploying publicly.
 
 ## API
 
@@ -53,4 +62,4 @@ Admin: `/admin/login`, then `/admin`. Sessions use an HttpOnly cookie and are ch
 - `GET /api/properties/:id`
 - `POST /api/enquiries`
 - Admin session routes: `/api/auth/login`, `/api/auth/me`, `/api/auth/logout`
-- Admin listing routes: `POST /api/properties`, `PUT` and `DELETE /api/properties/:id`, and `GET /api/properties?summary=1`
+- Admin listing routes: `POST /api/properties`, `PUT` and `DELETE` `/api/properties/:id`, and `GET /api/properties?summary=1`

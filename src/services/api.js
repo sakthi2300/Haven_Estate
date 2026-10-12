@@ -1,4 +1,4 @@
-const API_BASE = (__VERCEL_BUILD__ ? '' : import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
 
 export async function apiFetch(path, { method = 'GET', body, headers } = {}) {
   const response = await fetch(`${API_BASE}${path}`, {

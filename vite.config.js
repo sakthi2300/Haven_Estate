@@ -5,7 +5,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-function createVercelResponse(res) {
+function createApiResponse(res) {
   const api = {
     statusCode: 200,
     status(code) {
@@ -62,11 +62,12 @@ function localApiPlugin() {
   let root = process.cwd()
 
   return {
-    name: 'local-vercel-api',
+    name: 'local-api',
     configResolved(config) {
       root = config.root
     },
     configureServer(server) {
+      if (process.env.SITE_ID || process.env.NETLIFY === 'true') return
       const env = loadEnv(server.config.mode, root, '')
       for (const [key, value] of Object.entries(env)) {
         if (process.env[key] === undefined) process.env[key] = value
@@ -86,13 +87,13 @@ function localApiPlugin() {
 
         try {
           const mod = await import(`${pathToFileURL(match.file).href}?t=${Date.now()}`)
-          const vercelReq = req
-          vercelReq.query = Object.fromEntries(url.searchParams.entries())
-          if (match.id) vercelReq.query.id = match.id
-          vercelReq.body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method || '')
+          const apiReq = req
+          apiReq.query = Object.fromEntries(url.searchParams.entries())
+          if (match.id) apiReq.query.id = match.id
+          apiReq.body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method || '')
             ? await readBody(req)
             : undefined
-          await mod.default(vercelReq, createVercelResponse(res))
+          await mod.default(apiReq, createApiResponse(res))
         } catch (error) {
           console.error(error)
           if (!res.headersSent) {
@@ -107,9 +108,6 @@ function localApiPlugin() {
 }
 
 export default defineConfig({
-  define: {
-    __VERCEL_BUILD__: JSON.stringify(process.env.VERCEL === '1'),
-  },
   plugins: [react(), tailwindcss(), localApiPlugin()],
   server: {
     port: 5173,
